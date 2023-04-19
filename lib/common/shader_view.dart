@@ -47,6 +47,10 @@ class _ShaderViewState extends State<ShaderView> {
             painter: ShaderPainter(shader: snapshot.data!.fragmentShader()),
           );
         } else {
+          if (snapshot.hasError) {
+            print(snapshot.error);
+          }
+          
           return const Center(child: CircularProgressIndicator());
         }
       },
