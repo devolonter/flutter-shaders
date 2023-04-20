@@ -3,16 +3,16 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class ShaderPainter extends CustomPainter {
+  final FragmentShader shader;
+  final Paint _paint;
+
   ShaderPainter({
     required this.shader,
-  });
-
-  final FragmentShader shader;
+  }): _paint = Paint()..shader = shader;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..shader = shader;
-    canvas.drawRect(Offset.zero & size, paint);
+    canvas.drawRect(Offset.zero & size, _paint);
   }
 
   @override
@@ -20,9 +20,9 @@ class ShaderPainter extends CustomPainter {
 }
 
 class ShaderView extends StatefulWidget {
-  const ShaderView({Key? key, required this.shader}) : super(key: key);
+  const ShaderView({Key? key, required this.shaderName}) : super(key: key);
 
-  final String shader;
+  final String shaderName;
 
   @override
   State<ShaderView> createState() => _ShaderViewState();
@@ -34,7 +34,7 @@ class _ShaderViewState extends State<ShaderView> {
   @override
   void initState() {
     super.initState();
-    loader = FragmentProgram.fromAsset("shaders/${widget.shader}.frag");
+    loader = FragmentProgram.fromAsset("shaders/${widget.shaderName}.frag");
   }
 
   @override
@@ -50,7 +50,7 @@ class _ShaderViewState extends State<ShaderView> {
           if (snapshot.hasError) {
             print(snapshot.error);
           }
-          
+
           return const Center(child: CircularProgressIndicator());
         }
       },
