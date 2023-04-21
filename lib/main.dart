@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_shaders/examples/hello_example.dart';
+import 'package:flutter_shaders/examples/time_example.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
       ),
-      home: const HelloExample(),
+      home: const TimeExample(),
     );
   }
 }
