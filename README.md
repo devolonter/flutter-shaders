@@ -1,16 +1,24 @@
-# flutter_shaders
+# Shader Articles Series
 
-A new Flutter project.
+This repository contains the code examples used in my articles series on shaders. The articles cover various topics related to shaders and how to implement them in Flutter using the `ShaderView` widget.
+
+## Articles
+
+Here is a list of the articles currently included in this series:
+
+1.  [Hello World](https://www.linkedin.com/pulse/flutter-shaders-hello-world-artur-bikmullin/) - A basic introduction to shaders and how to use them in Flutter.
+2.  [Uniforms and Time](https://www.linkedin.com/pulse/flutter-shaders-uniforms-time-artur-bikmullin/) - An exploration of how to use uniforms and time in shaders to create infinite animations.
+
+Stay tuned for more articles to come!
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+To get started, simply clone this repository and open the desired code example in your preferred IDE. Make sure to follow the instructions provided in the article to set up the code correctly.
 
-A few resources to get you started if this is your first Flutter project:
+## Contributions
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Contributions to this repository are always welcome! If you have a suggestion for a new article or code example, please feel free to create a pull request.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## License
+
+This repository is licensed under the MIT license. See `LICENSE` for more information.
