@@ -5,6 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
+class Uniform {
+  final int index;
+  final int size;
+
+  Uniform(this.index, this.size);
+}
+
 class ShaderPainter extends CustomPainter {
   late final Paint _paint;
 
@@ -39,6 +46,7 @@ class ShaderView extends StatefulWidget {
 class _ShaderViewState extends State<ShaderView>
     with SingleTickerProviderStateMixin {
   late final Future<FragmentShader> _loader;
+  final Map<String, Uniform> _uniforms = {};
 
   FragmentShader? _shader;
   ValueNotifier<double>? _time;
@@ -78,13 +86,14 @@ class _ShaderViewState extends State<ShaderView>
   Future<FragmentShader> _loadShader(String shaderName) async {
     try {
       final FragmentProgram program = await FragmentProgram.fromAsset(shaderName);
-      int? timeUniform = await _getTimeUniform(shaderName);
+      await _getUniforms(shaderName);
+      final timeUniform = _uniforms[widget.timeUniform];
 
       if (timeUniform != null) {
         _time = ValueNotifier(0.0);
         _ticker = createTicker((elapsed) {
           final double elapsedSeconds = elapsed.inMilliseconds / 1000;
-          _shader?.setFloat(timeUniform, elapsedSeconds);
+          _shader?.setFloat(timeUniform.index, elapsedSeconds);
           _time?.value = elapsedSeconds;
         });
         _ticker!.start();
@@ -97,7 +106,7 @@ class _ShaderViewState extends State<ShaderView>
     }
   }
 
-  Future<int?> _getTimeUniform(String shaderName) async {
+  Future<int?> _getUniforms(String shaderName) async {
     final Uint8List buffer = (await rootBundle.load(shaderName)).buffer.asUint8List();
     int uniformIndex = 0;
     int? timeUniform;
@@ -105,13 +114,9 @@ class _ShaderViewState extends State<ShaderView>
     _lookupBuffer(buffer, 0, (start, split) {
       if (split.length == 3 && split[0] == 'uniform') {
         int? offset;
-        bool found = false;
 
         switch (split[1]) {
           case 'float':
-            if (split[2] == widget.timeUniform) {
-              found = true;
-            }
             offset = 1;
             break;
           case 'vec2':
@@ -129,12 +134,8 @@ class _ShaderViewState extends State<ShaderView>
           _lookupBuffer(buffer, start, (_, s) {
             for (var i = 0; i < s.length; i++) {
               if (s[i] == split[2]) {
-                if (found) {
-                  timeUniform = uniformIndex;
-                } else {
-                  uniformIndex += offset!;
-                }
-
+                _uniforms[s[i]] = Uniform(uniformIndex, offset!);
+                uniformIndex += offset;
                 return true;
               }
             }
