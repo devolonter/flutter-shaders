@@ -34,9 +34,13 @@ class ShaderPainter extends CustomPainter {
 class ShaderView extends StatefulWidget {
   final String shaderName;
   final String timeUniform;
+  final Function(Function(String uniformName, dynamic value))? onShaderLoaded;
 
   const ShaderView(
-      {Key? key, required this.shaderName, this.timeUniform = 'uTime'})
+      {Key? key,
+      required this.shaderName,
+      this.timeUniform = 'uTime',
+      this.onShaderLoaded})
       : super(key: key);
 
   @override
@@ -85,7 +89,8 @@ class _ShaderViewState extends State<ShaderView>
 
   Future<FragmentShader> _loadShader(String shaderName) async {
     try {
-      final FragmentProgram program = await FragmentProgram.fromAsset(shaderName);
+      final FragmentProgram program =
+          await FragmentProgram.fromAsset(shaderName);
       await _getUniforms(shaderName);
       final timeUniform = _uniforms[widget.timeUniform];
 
@@ -100,6 +105,19 @@ class _ShaderViewState extends State<ShaderView>
       }
 
       _shader = program.fragmentShader();
+
+      widget.onShaderLoaded?.call((uniformName, value) {
+        final uniform = _uniforms[uniformName];
+
+        if (uniform != null) {
+          switch (uniform.size) {
+            case 1:
+              _shader?.setFloat(uniform.index, value);
+              break;
+          }
+        }
+      });
+
       return _shader!;
     } catch (e) {
       rethrow;
@@ -107,7 +125,8 @@ class _ShaderViewState extends State<ShaderView>
   }
 
   Future<int?> _getUniforms(String shaderName) async {
-    final Uint8List buffer = (await rootBundle.load(shaderName)).buffer.asUint8List();
+    final Uint8List buffer =
+        (await rootBundle.load(shaderName)).buffer.asUint8List();
     int uniformIndex = 0;
     int? timeUniform;
 
@@ -151,7 +170,8 @@ class _ShaderViewState extends State<ShaderView>
     return timeUniform;
   }
 
-  void _lookupBuffer(Uint8List buffer, int start, bool Function(int offset, List<String>) callback) {
+  void _lookupBuffer(Uint8List buffer, int start,
+      bool Function(int offset, List<String>) callback) {
     final StringBuffer sb = StringBuffer();
 
     for (var i = start; i < buffer.length; i++) {
