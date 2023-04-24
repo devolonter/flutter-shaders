@@ -56,8 +56,6 @@ class _ShaderViewState extends State<ShaderView>
   ValueNotifier<double>? _time;
   Ticker? _ticker;
 
-  ShaderPainter? _painter;
-
   @override
   void initState() {
     super.initState();
