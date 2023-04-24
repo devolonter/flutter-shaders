@@ -49,23 +49,30 @@ class ShaderView extends StatefulWidget {
 
 class _ShaderViewState extends State<ShaderView>
     with SingleTickerProviderStateMixin {
-  late final Future<FragmentShader> _loader;
+  Future<FragmentShader>? _loader;
   final Map<String, Uniform> _uniforms = {};
 
   FragmentShader? _shader;
   ValueNotifier<double>? _time;
   Ticker? _ticker;
 
+  ShaderPainter? _painter;
+
   @override
   void initState() {
     super.initState();
-    _loader = _loadShader("shaders/${widget.shaderName}.frag");
   }
 
   @override
   void dispose() {
     _ticker?.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(ShaderView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loader = _loadShader("shaders/${widget.shaderName}.frag");
   }
 
   @override
@@ -94,7 +101,7 @@ class _ShaderViewState extends State<ShaderView>
       await _getUniforms(shaderName);
       final timeUniform = _uniforms[widget.timeUniform];
 
-      if (timeUniform != null) {
+      if (timeUniform != null && _ticker == null) {
         _time = ValueNotifier(0.0);
         _ticker = createTicker((elapsed) {
           final double elapsedSeconds = elapsed.inMilliseconds / 1000;
