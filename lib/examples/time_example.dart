@@ -19,7 +19,6 @@ class _TimeExampleState extends State<TimeExample> {
   Widget build(BuildContext context) {
     return const ShaderView(
         shaderName: 'time',
-        timeUniform: 0,
     );
   }
 }
