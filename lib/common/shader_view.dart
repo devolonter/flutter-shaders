@@ -131,6 +131,25 @@ class _ShaderViewState extends State<ShaderView>
             case 1:
               val[0] = value as double;
               break;
+            case 2:
+              switch (value.runtimeType) {
+                case Offset:
+                  final offset = value as Offset;
+                  val[0] = offset.dx;
+                  val[1] = offset.dy;
+                  break;
+                case Size:
+                  final size = value as Size;
+                  val[0] = size.width;
+                  val[1] = size.height;
+                  break;
+                case Point<double>:
+                  final point = value as Point<double>;
+                  val[0] = point.x;
+                  val[1] = point.y;
+                  break;
+              }
+              break;
             case 4:
               switch (value.runtimeType) {
                 case Color:
