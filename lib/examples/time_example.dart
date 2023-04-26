@@ -1,5 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_shaders/common/shader_view.dart';
+import 'package:flutter_shaders/common/shader_container.dart';
 
 class TimeExample extends StatelessWidget {
   const TimeExample({Key? key}) : super(key: key);
@@ -16,7 +18,7 @@ class TimeExample extends StatelessWidget {
       itemCount: 10,
       padding: EdgeInsets.zero,
       itemBuilder: (context, index) {
-        return ShaderView(
+        return ShaderContainer(
             shaderName: 'time',
             onShaderLoaded: (setUniform) {
               setUniform('uShift', -index / 10.0);

@@ -6,23 +6,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
-class ShaderView extends StatefulWidget {
+class ShaderContainer extends StatefulWidget {
   final String shaderName;
   final String timeUniform;
   final Function(Function(String uniformName, dynamic value))? onShaderLoaded;
+  final Widget? child;
 
-  const ShaderView(
+  const ShaderContainer(
       {Key? key,
       required this.shaderName,
       this.timeUniform = 'uTime',
-      this.onShaderLoaded})
+      this.onShaderLoaded,
+      this.child})
       : super(key: key);
 
   @override
-  State<ShaderView> createState() => _ShaderViewState();
+  State<ShaderContainer> createState() => _ShaderContainerState();
 }
 
-class _ShaderViewState extends State<ShaderView>
+class _ShaderContainerState extends State<ShaderContainer>
     with SingleTickerProviderStateMixin {
   Future<FragmentShader>? _loader;
   final Map<String, _Uniform> _uniforms = {};
@@ -43,7 +45,7 @@ class _ShaderViewState extends State<ShaderView>
   }
 
   @override
-  void didUpdateWidget(ShaderView oldWidget) {
+  void didUpdateWidget(ShaderContainer oldWidget) {
     super.didUpdateWidget(oldWidget);
     _loader = _loadShader("shaders/${widget.shaderName}.frag");
   }
@@ -55,7 +57,8 @@ class _ShaderViewState extends State<ShaderView>
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return CustomPaint(
-              painter: _ShaderPainter(shader: snapshot.data!, repaint: _time));
+              painter: _ShaderPainter(shader: snapshot.data!, repaint: _time),
+              child: widget.child);
         } else {
           if (snapshot.hasError) {
             print(snapshot.error);
