@@ -135,7 +135,9 @@ class _ShaderViewState extends State<ShaderView>
     int uniformIndex = 0;
     int? timeUniform;
 
-    _lookupBuffer(buffer, 0, (start, split) {
+    _lookupBuffer(buffer, 0, (start, line) {
+      final List<String> split = line.split(RegExp(r"\s+"));
+
       if (split.length == 3 && split[0] == 'uniform') {
         int? offset;
 
@@ -155,7 +157,9 @@ class _ShaderViewState extends State<ShaderView>
         }
 
         if (offset != null) {
-          _lookupBuffer(buffer, start, (_, s) {
+          _lookupBuffer(buffer, start, (_, line) {
+            final List<String> s = line.split(RegExp(r"(\s+|[-*+\/\(\),])"));
+
             for (var i = 0; i < s.length; i++) {
               if (s[i] == split[2]) {
                 _uniforms[s[i]] = Uniform(uniformIndex, offset!);
@@ -176,7 +180,7 @@ class _ShaderViewState extends State<ShaderView>
   }
 
   void _lookupBuffer(Uint8List buffer, int start,
-      bool Function(int offset, List<String>) callback) {
+      bool Function(int, String) callback) {
     final StringBuffer sb = StringBuffer();
 
     for (var i = start; i < buffer.length; i++) {
@@ -187,12 +191,11 @@ class _ShaderViewState extends State<ShaderView>
           continue;
         }
 
-        final List<String> split = sb.toString().split(RegExp(r"\s+"));
-        sb.clear();
-
-        if (callback(i, split)) {
+        if (callback(i, sb.toString())) {
           return;
         }
+
+        sb.clear();
       }
     }
   }
