@@ -150,6 +150,22 @@ class _ShaderViewState extends State<ShaderView>
                   break;
               }
               break;
+            case 3:
+              switch (value.runtimeType) {
+                case Color:
+                  final color = value as Color;
+                  val[0] = color.red / 255;
+                  val[1] = color.green / 255;
+                  val[2] = color.blue / 255;
+                  break;
+                case int:
+                  final color = value as int;
+                  val[0] = (color >> 16 & 0xFF) / 255;
+                  val[1] = (color >> 8 & 0xFF) / 255;
+                  val[2] = (color & 0xFF) / 255;
+                  break;
+              }
+              break;
             case 4:
               switch (value.runtimeType) {
                 case Color:
