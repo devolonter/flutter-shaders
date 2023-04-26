@@ -6,32 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
-class Uniform {
-  final int index;
-  final int size;
-
-  Uniform(this.index, this.size);
-}
-
-class ShaderPainter extends CustomPainter {
-  late final Paint _paint;
-
-  ShaderPainter({
-    required FragmentShader shader,
-    Listenable? repaint,
-  }) : super(repaint: repaint) {
-    _paint = Paint()..shader = shader;
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, _paint);
-  }
-
-  @override
-  bool shouldRepaint(ShaderPainter oldDelegate) => false;
-}
-
 class ShaderView extends StatefulWidget {
   final String shaderName;
   final String timeUniform;
@@ -51,7 +25,7 @@ class ShaderView extends StatefulWidget {
 class _ShaderViewState extends State<ShaderView>
     with SingleTickerProviderStateMixin {
   Future<FragmentShader>? _loader;
-  final Map<String, Uniform> _uniforms = {};
+  final Map<String, _Uniform> _uniforms = {};
 
   FragmentShader? _shader;
   ValueNotifier<double>? _time;
@@ -81,7 +55,7 @@ class _ShaderViewState extends State<ShaderView>
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return CustomPaint(
-              painter: ShaderPainter(shader: snapshot.data!, repaint: _time));
+              painter: _ShaderPainter(shader: snapshot.data!, repaint: _time));
         } else {
           if (snapshot.hasError) {
             print(snapshot.error);
@@ -237,7 +211,7 @@ class _ShaderViewState extends State<ShaderView>
 
             for (var i = 0; i < s.length; i++) {
               if (s[i] == split[2]) {
-                _uniforms[s[i]] = Uniform(uniformIndex, offset!);
+                _uniforms[s[i]] = _Uniform(uniformIndex, offset!);
                 uniformIndex += offset;
                 return true;
               }
@@ -274,4 +248,30 @@ class _ShaderViewState extends State<ShaderView>
       }
     }
   }
+}
+
+class _Uniform {
+  final int index;
+  final int size;
+
+  _Uniform(this.index, this.size);
+}
+
+class _ShaderPainter extends CustomPainter {
+  late final Paint _paint;
+
+  _ShaderPainter({
+    required FragmentShader shader,
+    Listenable? repaint,
+  }) : super(repaint: repaint) {
+    _paint = Paint()..shader = shader;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, _paint);
+  }
+
+  @override
+  bool shouldRepaint(_ShaderPainter oldDelegate) => false;
 }
