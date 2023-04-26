@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -115,10 +116,49 @@ class _ShaderViewState extends State<ShaderView>
         final uniform = _uniforms[uniformName];
 
         if (uniform != null) {
+          List<double> val = List.filled(uniform.size, 0, growable: false);
+
+          if ((value.runtimeType == List<double>) &&
+              value.length == uniform.size) {
+            for (int i = 0; i < val.length; i++) {
+              _shader?.setFloat(uniform.index + i, value[i]);
+            }
+
+            return;
+          }
+
           switch (uniform.size) {
             case 1:
-              _shader?.setFloat(uniform.index, value);
+              val[0] = value as double;
               break;
+            case 4:
+              switch (value.runtimeType) {
+                case Color:
+                  final color = value as Color;
+                  val[0] = color.red / 255;
+                  val[1] = color.green / 255;
+                  val[2] = color.blue / 255;
+                  val[3] = color.alpha / 255;
+                  break;
+                case int:
+                  final color = value as int;
+                  val[0] = (color >> 16 & 0xFF) / 255;
+                  val[1] = (color >> 8 & 0xFF) / 255;
+                  val[2] = (color & 0xFF) / 255;
+                  val[3] = (color >> 24 & 0xFF) / 255;
+                  break;
+                case Rectangle<double>:
+                  final rect = value as Rectangle<double>;
+                  val[0] = rect.left;
+                  val[1] = rect.top;
+                  val[2] = rect.width;
+                  val[3] = rect.height;
+                  break;
+              }
+          }
+
+          for (int i = 0; i < val.length; i++) {
+            _shader?.setFloat(uniform.index + i, val[i]);
           }
         }
       });
@@ -179,8 +219,8 @@ class _ShaderViewState extends State<ShaderView>
     return timeUniform;
   }
 
-  void _lookupBuffer(Uint8List buffer, int start,
-      bool Function(int, String) callback) {
+  void _lookupBuffer(
+      Uint8List buffer, int start, bool Function(int, String) callback) {
     final StringBuffer sb = StringBuffer();
 
     for (var i = start; i < buffer.length; i++) {
