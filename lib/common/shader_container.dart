@@ -61,7 +61,7 @@ class _ShaderContainerState extends State<ShaderContainer>
               child: widget.child);
         } else {
           if (snapshot.hasError) {
-            print(snapshot.error);
+            throw snapshot.error!;
           }
 
           return const Center(child: CircularProgressIndicator());
