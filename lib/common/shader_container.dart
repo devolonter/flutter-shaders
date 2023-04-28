@@ -261,6 +261,10 @@ class _ShaderContainerState extends State<ShaderContainer>
       final List<String> split = line.split(RegExp(r"\s+"));
 
       if (split.length == 3 && split[0] == 'uniform') {
+        if (_uniforms.containsKey(split[2])) {
+          return false;
+        }
+        
         int? size;
         _UniformType type = _UniformType.float;
 
