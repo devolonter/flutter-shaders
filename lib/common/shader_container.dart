@@ -76,7 +76,7 @@ class _ShaderContainerState extends State<ShaderContainer>
     );
   }
 
-  Future<void> _detectShaderName() async {
+  Future<void> _detectShaderPath() async {
     final List<String> shaderNames = [
       widget.shader,
       'shaders/${widget.shader}.frag',
@@ -100,7 +100,7 @@ class _ShaderContainerState extends State<ShaderContainer>
 
   Future<FragmentShader> _loadShader() async {
     if (_shaderPath == null) {
-      await _detectShaderName();
+      await _detectShaderPath();
     }
 
     try {
@@ -110,13 +110,7 @@ class _ShaderContainerState extends State<ShaderContainer>
       final timeUniform = _uniforms[widget.timeUniform];
 
       if (timeUniform != null && _ticker == null) {
-        _time = ValueNotifier(0.0);
-        _ticker = createTicker((elapsed) {
-          final double elapsedSeconds = elapsed.inMilliseconds / 1000;
-          _shader?.setFloat(timeUniform.index, elapsedSeconds);
-          _time?.value = elapsedSeconds;
-        });
-        _ticker!.start();
+        _createTicker(timeUniform);
       }
 
       _shader = program.fragmentShader();
@@ -124,116 +118,132 @@ class _ShaderContainerState extends State<ShaderContainer>
           .where((uniform) => uniform.type == _UniformType.image);
 
       if (images.isNotEmpty) {
-        final Uint8List whitePixel = Uint8List.fromList([255, 255, 255, 255]);
-        final Completer<ui.Image> completer = Completer<ui.Image>();
-        ui.decodeImageFromPixels(
-            whitePixel.buffer.asUint8List(),
-            1,
-            1,
-            ui.PixelFormat.rgba8888,
-                (ui.Image img) => completer.complete(img));
-        final ui.Image whiteImage = await completer.future;
-
-        for (final image in images) {
-          _shader?.setImageSampler(image.index, whiteImage);
-        }
+        await _setupSamplers(images);
       }
 
-      widget.onShaderLoaded?.call((uniformName, value) {
-        final uniform = _uniforms[uniformName];
-
-        if (uniform != null) {
-          if (uniform.type == _UniformType.image) {
-            _shader?.setImageSampler(uniform.index, value);
-            return;
-          }
-
-          List<double> val = List.filled(uniform.size, 0, growable: false);
-
-          if ((value.runtimeType == List<double>) &&
-              value.length == uniform.size) {
-            for (int i = 0; i < val.length; i++) {
-              _shader?.setFloat(uniform.index + i, value[i]);
-            }
-
-            return;
-          }
-
-          switch (uniform.size) {
-            case 1:
-              val[0] = value as double;
-              break;
-            case 2:
-              switch (value.runtimeType) {
-                case Offset:
-                  final offset = value as Offset;
-                  val[0] = offset.dx;
-                  val[1] = offset.dy;
-                  break;
-                case Size:
-                  final size = value as Size;
-                  val[0] = size.width;
-                  val[1] = size.height;
-                  break;
-                case Point<double>:
-                  final point = value as Point<double>;
-                  val[0] = point.x;
-                  val[1] = point.y;
-                  break;
-              }
-              break;
-            case 3:
-              switch (value.runtimeType) {
-                case Color:
-                  final color = value as Color;
-                  val[0] = color.red / 255;
-                  val[1] = color.green / 255;
-                  val[2] = color.blue / 255;
-                  break;
-                case int:
-                  final color = value as int;
-                  val[0] = (color >> 16 & 0xFF) / 255;
-                  val[1] = (color >> 8 & 0xFF) / 255;
-                  val[2] = (color & 0xFF) / 255;
-                  break;
-              }
-              break;
-            case 4:
-              switch (value.runtimeType) {
-                case Color:
-                  final color = value as Color;
-                  val[0] = color.red / 255;
-                  val[1] = color.green / 255;
-                  val[2] = color.blue / 255;
-                  val[3] = color.alpha / 255;
-                  break;
-                case int:
-                  final color = value as int;
-                  val[0] = (color >> 16 & 0xFF) / 255;
-                  val[1] = (color >> 8 & 0xFF) / 255;
-                  val[2] = (color & 0xFF) / 255;
-                  val[3] = (color >> 24 & 0xFF) / 255;
-                  break;
-                case Rectangle<double>:
-                  final rect = value as Rectangle<double>;
-                  val[0] = rect.left;
-                  val[1] = rect.top;
-                  val[2] = rect.width;
-                  val[3] = rect.height;
-                  break;
-              }
-          }
-
-          for (int i = 0; i < val.length; i++) {
-            _shader?.setFloat(uniform.index + i, val[i]);
-          }
-        }
-      });
-
+      widget.onShaderLoaded?.call(_setUniform);
       return _shader!;
     } catch (e) {
       rethrow;
     }
+  }
+
+  _setUniform(uniformName, value) {
+    final uniform = _uniforms[uniformName];
+    if (uniform == null) {
+      throw Exception('Uniform $uniformName not found');
+    }
+
+    if (uniform.type == _UniformType.image) {
+      _shader?.setImageSampler(uniform.index, value);
+      return;
+    }
+
+    List<double> val = List.filled(uniform.size, 0, growable: false);
+
+    if ((value.runtimeType == List<double>) &&
+        value.length == uniform.size) {
+      for (int i = 0; i < val.length; i++) {
+        _shader?.setFloat(uniform.index + i, value[i]);
+      }
+
+      return;
+    }
+
+    switch (uniform.size) {
+      case 1:
+        val[0] = value as double;
+        break;
+      case 2:
+        switch (value.runtimeType) {
+          case Offset:
+            final offset = value as Offset;
+            val[0] = offset.dx;
+            val[1] = offset.dy;
+            break;
+          case Size:
+            final size = value as Size;
+            val[0] = size.width;
+            val[1] = size.height;
+            break;
+          case Point<double>:
+            final point = value as Point<double>;
+            val[0] = point.x;
+            val[1] = point.y;
+            break;
+        }
+        break;
+      case 3:
+        switch (value.runtimeType) {
+          case Color:
+            final color = value as Color;
+            val[0] = color.red / 255;
+            val[1] = color.green / 255;
+            val[2] = color.blue / 255;
+            break;
+          case int:
+            final color = value as int;
+            val[0] = (color >> 16 & 0xFF) / 255;
+            val[1] = (color >> 8 & 0xFF) / 255;
+            val[2] = (color & 0xFF) / 255;
+            break;
+        }
+        break;
+      case 4:
+        switch (value.runtimeType) {
+          case Color:
+            final color = value as Color;
+            val[0] = color.red / 255;
+            val[1] = color.green / 255;
+            val[2] = color.blue / 255;
+            val[3] = color.alpha / 255;
+            break;
+          case int:
+            final color = value as int;
+            val[0] = (color >> 16 & 0xFF) / 255;
+            val[1] = (color >> 8 & 0xFF) / 255;
+            val[2] = (color & 0xFF) / 255;
+            val[3] = (color >> 24 & 0xFF) / 255;
+            break;
+          case Rectangle<double>:
+            final rect = value as Rectangle<double>;
+            val[0] = rect.left;
+            val[1] = rect.top;
+            val[2] = rect.width;
+            val[3] = rect.height;
+            break;
+        }
+    }
+
+    for (int i = 0; i < val.length; i++) {
+      _shader?.setFloat(uniform.index + i, val[i]);
+    }
+  }
+
+  Future<void> _setupSamplers(Iterable<_Uniform> images) async {
+    final Uint8List whitePixel = Uint8List.fromList([255, 255, 255, 255]);
+    final Completer<ui.Image> completer = Completer<ui.Image>();
+    ui.decodeImageFromPixels(
+        whitePixel.buffer.asUint8List(),
+        1,
+        1,
+        ui.PixelFormat.rgba8888,
+            (ui.Image img) => completer.complete(img));
+    final ui.Image whiteImage = await completer.future;
+
+    for (final image in images) {
+      _shader?.setImageSampler(image.index, whiteImage);
+    }
+  }
+
+  void _createTicker(_Uniform timeUniform) {
+    _time = ValueNotifier(0.0);
+    _ticker = createTicker((elapsed) {
+      final double elapsedSeconds = elapsed.inMilliseconds / 1000;
+      _shader?.setFloat(timeUniform.index, elapsedSeconds);
+      _time?.value = elapsedSeconds;
+    });
+    _ticker!.start();
   }
 
   Future<int?> _getUniforms() async {
