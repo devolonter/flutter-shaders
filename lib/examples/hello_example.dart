@@ -7,7 +7,7 @@ class HelloExample extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const ShaderContainer(
-        shaderName: 'hello'
+        shader: 'hello'
     );
   }
 }

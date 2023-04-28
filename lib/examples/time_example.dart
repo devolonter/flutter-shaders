@@ -19,7 +19,7 @@ class TimeExample extends StatelessWidget {
       padding: EdgeInsets.zero,
       itemBuilder: (context, index) {
         return ShaderContainer(
-            shaderName: 'time',
+            shader: 'shaders/time.frag',
             onShaderLoaded: (setUniform) {
               setUniform('uShift', -index / 10.0);
             }

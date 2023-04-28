@@ -7,14 +7,14 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 class ShaderContainer extends StatefulWidget {
-  final String shaderName;
+  final String shader;
   final String timeUniform;
   final Function(Function(String uniformName, dynamic value))? onShaderLoaded;
   final Widget? child;
 
   const ShaderContainer(
       {Key? key,
-      required this.shaderName,
+      required this.shader,
       this.timeUniform = 'uTime',
       this.onShaderLoaded,
       this.child})
@@ -33,6 +33,8 @@ class _ShaderContainerState extends State<ShaderContainer>
   ValueNotifier<double>? _time;
   Ticker? _ticker;
 
+  String? _shaderPath;
+
   @override
   void initState() {
     super.initState();
@@ -47,7 +49,10 @@ class _ShaderContainerState extends State<ShaderContainer>
   @override
   void didUpdateWidget(ShaderContainer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _loader = _loadShader("shaders/${widget.shaderName}.frag");
+    if (oldWidget.shader != widget.shader) {
+      _shaderPath = null;
+    }
+    _loader = _loadShader();
   }
 
   @override
@@ -70,11 +75,37 @@ class _ShaderContainerState extends State<ShaderContainer>
     );
   }
 
-  Future<FragmentShader> _loadShader(String shaderName) async {
+  Future<void> _detectShaderName() async {
+    final List<String> shaderNames = [
+      widget.shader,
+      'shaders/${widget.shader}.frag',
+      '${widget.shader}.frag',
+    ];
+
+    for (final shaderName in shaderNames) {
+      try {
+        await rootBundle.load(shaderName);
+        _shaderPath = shaderName;
+        break;
+      } catch (e) {
+        continue;
+      }
+    }
+
+    if (_shaderPath == null) {
+      throw Exception('Shader "${widget.shader}" not found');
+    }
+  }
+
+  Future<FragmentShader> _loadShader() async {
+    if (_shaderPath == null) {
+      await _detectShaderName();
+    }
+
     try {
       final FragmentProgram program =
-          await FragmentProgram.fromAsset(shaderName);
-      await _getUniforms(shaderName);
+          await FragmentProgram.fromAsset(_shaderPath!);
+      await _getUniforms();
       final timeUniform = _uniforms[widget.timeUniform];
 
       if (timeUniform != null && _ticker == null) {
@@ -181,9 +212,9 @@ class _ShaderContainerState extends State<ShaderContainer>
     }
   }
 
-  Future<int?> _getUniforms(String shaderName) async {
+  Future<int?> _getUniforms() async {
     final Uint8List buffer =
-        (await rootBundle.load(shaderName)).buffer.asUint8List();
+        (await rootBundle.load(_shaderPath!)).buffer.asUint8List();
     int uniformIndex = 0;
     int? timeUniform;
 
