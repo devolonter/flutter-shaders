@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -119,11 +120,34 @@ class _ShaderContainerState extends State<ShaderContainer>
       }
 
       _shader = program.fragmentShader();
+      final Iterable<_Uniform> images = _uniforms.values
+          .where((uniform) => uniform.type == _UniformType.image);
+
+      if (images.isNotEmpty) {
+        final Uint8List whitePixel = Uint8List.fromList([255, 255, 255, 255]);
+        final Completer<ui.Image> completer = Completer<ui.Image>();
+        ui.decodeImageFromPixels(
+            whitePixel.buffer.asUint8List(),
+            1,
+            1,
+            ui.PixelFormat.rgba8888,
+                (ui.Image img) => completer.complete(img));
+        final ui.Image whiteImage = await completer.future;
+
+        for (final image in images) {
+          _shader?.setImageSampler(image.index, whiteImage);
+        }
+      }
 
       widget.onShaderLoaded?.call((uniformName, value) {
         final uniform = _uniforms[uniformName];
 
         if (uniform != null) {
+          if (uniform.type == _UniformType.image) {
+            _shader?.setImageSampler(uniform.index, value);
+            return;
+          }
+
           List<double> val = List.filled(uniform.size, 0, growable: false);
 
           if ((value.runtimeType == List<double>) &&
@@ -215,7 +239,11 @@ class _ShaderContainerState extends State<ShaderContainer>
   Future<int?> _getUniforms() async {
     final Uint8List buffer =
         (await rootBundle.load(_shaderPath!)).buffer.asUint8List();
-    int uniformIndex = 0;
+    final Map<int, int> uniformIndex = {};
+    for (final _UniformType type in _UniformType.values) {
+      uniformIndex[type.index] = 0;
+    }
+
     int? timeUniform;
 
     _lookupBuffer(buffer, 0, (start, line) {
@@ -223,6 +251,7 @@ class _ShaderContainerState extends State<ShaderContainer>
 
       if (split.length == 3 && split[0] == 'uniform') {
         int? size;
+        _UniformType type = _UniformType.float;
 
         switch (split[1]) {
           case 'float':
@@ -237,16 +266,22 @@ class _ShaderContainerState extends State<ShaderContainer>
           case 'vec4':
             size = 4;
             break;
+          case 'shader':
+            size = 1;
+            type = _UniformType.image;
+            break;
         }
 
         if (size != null) {
           _lookupBuffer(buffer, start, (_, line) {
-            final List<String> s = line.split(RegExp(r"(\s+|[-*+\/\(\),])"));
+            final List<String> s = line.split(RegExp(r"(\s+|[-*+/(),])"));
 
             for (var i = 0; i < s.length; i++) {
               if (s[i] == split[2]) {
-                _uniforms[s[i]] = _Uniform(uniformIndex, size!);
-                uniformIndex += size;
+                _uniforms[s[i]] =
+                    _Uniform(uniformIndex[type.index]!, size!, type);
+                uniformIndex[type.index] = uniformIndex[type.index]! + size;
+
                 return true;
               }
             }
@@ -284,11 +319,14 @@ class _ShaderContainerState extends State<ShaderContainer>
   }
 }
 
+enum _UniformType { float, image }
+
 class _Uniform {
   final int index;
   final int size;
+  final _UniformType type;
 
-  _Uniform(this.index, this.size);
+  _Uniform(this.index, this.size, this.type);
 }
 
 class _ShaderPainter extends CustomPainter {
