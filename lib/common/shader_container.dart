@@ -222,31 +222,31 @@ class _ShaderContainerState extends State<ShaderContainer>
       final List<String> split = line.split(RegExp(r"\s+"));
 
       if (split.length == 3 && split[0] == 'uniform') {
-        int? offset;
+        int? size;
 
         switch (split[1]) {
           case 'float':
-            offset = 1;
+            size = 1;
             break;
           case 'vec2':
-            offset = 2;
+            size = 2;
             break;
           case 'vec3':
-            offset = 3;
+            size = 3;
             break;
           case 'vec4':
-            offset = 4;
+            size = 4;
             break;
         }
 
-        if (offset != null) {
+        if (size != null) {
           _lookupBuffer(buffer, start, (_, line) {
             final List<String> s = line.split(RegExp(r"(\s+|[-*+\/\(\),])"));
 
             for (var i = 0; i < s.length; i++) {
               if (s[i] == split[2]) {
-                _uniforms[s[i]] = _Uniform(uniformIndex, offset!);
-                uniformIndex += offset;
+                _uniforms[s[i]] = _Uniform(uniformIndex, size!);
+                uniformIndex += size;
                 return true;
               }
             }
