@@ -39,6 +39,7 @@ class _ShaderContainerState extends State<ShaderContainer>
   @override
   void initState() {
     super.initState();
+    _loader = _loadShader();
   }
 
   @override
