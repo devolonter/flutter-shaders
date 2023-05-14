@@ -142,8 +142,7 @@ class _ShaderContainerState extends State<ShaderContainer>
 
     List<double> val = List.filled(uniform.size, 0, growable: false);
 
-    if ((value.runtimeType == List<double>) &&
-        value.length == uniform.size) {
+    if ((value.runtimeType == List<double>) && value.length == uniform.size) {
       for (int i = 0; i < val.length; i++) {
         _shader?.setFloat(uniform.index + i, value[i]);
       }
@@ -224,12 +223,8 @@ class _ShaderContainerState extends State<ShaderContainer>
   Future<void> _setupSamplers(Iterable<_Uniform> images) async {
     final Uint8List whitePixel = Uint8List.fromList([255, 255, 255, 255]);
     final Completer<ui.Image> completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(
-        whitePixel.buffer.asUint8List(),
-        1,
-        1,
-        ui.PixelFormat.rgba8888,
-            (ui.Image img) => completer.complete(img));
+    ui.decodeImageFromPixels(whitePixel.buffer.asUint8List(), 1, 1,
+        ui.PixelFormat.rgba8888, (ui.Image img) => completer.complete(img));
     final ui.Image whiteImage = await completer.future;
 
     for (final image in images) {
@@ -264,7 +259,7 @@ class _ShaderContainerState extends State<ShaderContainer>
         if (_uniforms.containsKey(split[2])) {
           return false;
         }
-        
+
         int? size;
         _UniformType type = _UniformType.float;
 
@@ -324,7 +319,7 @@ class _ShaderContainerState extends State<ShaderContainer>
           continue;
         }
 
-        if (callback(i, sb.toString())) {
+        if (callback(i, sb.toString().replaceAll('\\n', ''))) {
           return;
         }
 
