@@ -11,12 +11,14 @@ class ShaderContainer extends StatefulWidget {
   final String shader;
   final String timeUniform;
   final Function(Function(String uniformName, dynamic value))? onShaderLoaded;
+  final bool debug;
   final Widget? child;
 
   const ShaderContainer(
       {Key? key,
         required this.shader,
         this.timeUniform = 'uTime',
+        this.debug = false,
         this.onShaderLoaded,
         this.child})
       : super(key: key);
@@ -51,6 +53,10 @@ class _ShaderContainerState extends State<ShaderContainer>
   @override
   void didUpdateWidget(ShaderContainer oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!widget.debug) {
+      return;
+    }
+
     if (oldWidget.shader != widget.shader) {
       _shaderPath = null;
     }
