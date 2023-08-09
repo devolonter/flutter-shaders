@@ -8,10 +8,12 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 typedef UniformSetter = void Function(String uniformName, dynamic value);
+typedef _PaintCallback = void Function(Canvas canvas, Size size);
 
 class ShaderContainer extends StatefulWidget {
   final String shader;
   final String timeUniform;
+  final String sizeUniform;
   final Function(UniformSetter)? onShaderLoaded;
   final bool debug;
   final bool active;
@@ -19,12 +21,13 @@ class ShaderContainer extends StatefulWidget {
 
   const ShaderContainer(
       {Key? key,
-        required this.shader,
-        this.timeUniform = 'uTime',
-        this.debug = false,
-        this.active = true,
-        this.onShaderLoaded,
-        this.child})
+      required this.shader,
+      this.timeUniform = 'uTime',
+      this.sizeUniform = 'uSize',
+      this.debug = false,
+      this.active = true,
+      this.onShaderLoaded,
+      this.child})
       : super(key: key);
 
   @override
@@ -78,7 +81,10 @@ class _ShaderContainerState extends State<ShaderContainer>
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return CustomPaint(
-              painter: _ShaderPainter(shader: snapshot.data!, repaint: _time),
+              painter: _ShaderPainter(
+                  shader: snapshot.data!,
+                  repaint: _time,
+                  onPaint: _getPaintCallback()),
               child: widget.child);
         } else {
           if (snapshot.hasError) {
@@ -120,7 +126,7 @@ class _ShaderContainerState extends State<ShaderContainer>
 
     try {
       final FragmentProgram program =
-      await FragmentProgram.fromAsset(_shaderPath!);
+          await FragmentProgram.fromAsset(_shaderPath!);
       await _getUniforms();
       final timeUniform = _uniforms[widget.timeUniform];
 
@@ -269,7 +275,7 @@ class _ShaderContainerState extends State<ShaderContainer>
 
   Future<int?> _getUniforms() async {
     final Uint8List buffer =
-    (await rootBundle.load(_shaderPath!)).buffer.asUint8List();
+        (await rootBundle.load(_shaderPath!)).buffer.asUint8List();
     final Map<int, int> uniformIndex = {};
     for (final _UniformType type in _UniformType.values) {
       uniformIndex[type.index] = 0;
@@ -365,6 +371,19 @@ class _ShaderContainerState extends State<ShaderContainer>
   void _updateTickerState() {
     _ticker?.muted = !widget.active;
   }
+
+  _PaintCallback? _getPaintCallback() {
+    final _Uniform? sizeUniform = _uniforms[widget.sizeUniform];
+
+    if (sizeUniform != null) {
+      return (canvas, size) {
+        _shader?.setFloat(sizeUniform.index, size.width);
+        _shader?.setFloat(sizeUniform.index + 1, size.height);
+      };
+    } else {
+      return null;
+    }
+  }
 }
 
 enum _UniformType { float, image }
@@ -379,9 +398,11 @@ class _Uniform {
 
 class _ShaderPainter extends CustomPainter {
   late final Paint _paint;
+  late final _PaintCallback? onPaint;
 
   _ShaderPainter({
     required FragmentShader shader,
+    this.onPaint,
     Listenable? repaint,
   }) : super(repaint: repaint) {
     _paint = Paint()..shader = shader;
@@ -389,6 +410,7 @@ class _ShaderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    onPaint?.call(canvas, size);
     canvas.drawRect(Offset.zero & size, _paint);
   }
 
