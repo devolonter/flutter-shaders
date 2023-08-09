@@ -166,10 +166,10 @@ class _ShaderContainerState extends State<ShaderContainer>
             val[0] = size.width;
             val[1] = size.height;
             break;
-          case Point<double>:
-            final point = value as Point<double>;
-            val[0] = point.x;
-            val[1] = point.y;
+          case Point:
+            final point = value as Point;
+            val[0] = point.x.toDouble();
+            val[1] = point.y.toDouble();
             break;
         }
         break;
@@ -205,12 +205,12 @@ class _ShaderContainerState extends State<ShaderContainer>
             val[2] = (color & 0xFF) / 255;
             val[3] = (color >> 24 & 0xFF) / 255;
             break;
-          case Rectangle<double>:
-            final rect = value as Rectangle<double>;
-            val[0] = rect.left;
-            val[1] = rect.top;
-            val[2] = rect.width;
-            val[3] = rect.height;
+          case Rectangle:
+            final rect = value as Rectangle;
+            val[0] = rect.left.toDouble();
+            val[1] = rect.top.toDouble();
+            val[2] = rect.width.toDouble();
+            val[3] = rect.height.toDouble();
             break;
         }
     }
