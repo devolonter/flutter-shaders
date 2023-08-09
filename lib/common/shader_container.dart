@@ -15,10 +15,10 @@ class ShaderContainer extends StatefulWidget {
 
   const ShaderContainer(
       {Key? key,
-      required this.shader,
-      this.timeUniform = 'uTime',
-      this.onShaderLoaded,
-      this.child})
+        required this.shader,
+        this.timeUniform = 'uTime',
+        this.onShaderLoaded,
+        this.child})
       : super(key: key);
 
   @override
@@ -106,7 +106,7 @@ class _ShaderContainerState extends State<ShaderContainer>
 
     try {
       final FragmentProgram program =
-          await FragmentProgram.fromAsset(_shaderPath!);
+      await FragmentProgram.fromAsset(_shaderPath!);
       await _getUniforms();
       final timeUniform = _uniforms[widget.timeUniform];
 
@@ -244,7 +244,7 @@ class _ShaderContainerState extends State<ShaderContainer>
 
   Future<int?> _getUniforms() async {
     final Uint8List buffer =
-        (await rootBundle.load(_shaderPath!)).buffer.asUint8List();
+    (await rootBundle.load(_shaderPath!)).buffer.asUint8List();
     final Map<int, int> uniformIndex = {};
     for (final _UniformType type in _UniformType.values) {
       uniformIndex[type.index] = 0;
