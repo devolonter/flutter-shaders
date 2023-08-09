@@ -136,6 +136,16 @@ class _ShaderContainerState extends State<ShaderContainer>
     }
 
     if (uniform.type == _UniformType.image) {
+      if (value is String) {
+        _loadImage(value).then((image) {
+          if (image == null) {
+            throw Exception('Image $value not found');
+          }
+          _shader?.setImageSampler(uniform.index, image);
+        });
+
+        return;
+      }
       _shader?.setImageSampler(uniform.index, value);
       return;
     }
@@ -326,6 +336,15 @@ class _ShaderContainerState extends State<ShaderContainer>
         sb.clear();
       }
     }
+  }
+
+  Future<ui.Image?> _loadImage(String image) async {
+    final Completer<ui.Image> completer = Completer<ui.Image>();
+    final ByteData data = await rootBundle.load(image);
+    ui.decodeImageFromList(Uint8List.view(data.buffer), (ui.Image img) {
+      completer.complete(img);
+    });
+    return completer.future;
   }
 }
 
