@@ -7,11 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
+typedef UniformSetter = void Function(String uniformName, dynamic value);
+
 class ShaderContainer extends StatefulWidget {
   final String shader;
   final String timeUniform;
-  final Function(Function(String uniformName, dynamic value))? onShaderLoaded;
+  final Function(UniformSetter)? onShaderLoaded;
   final bool debug;
+  final bool active;
   final Widget? child;
 
   const ShaderContainer(
@@ -19,6 +22,7 @@ class ShaderContainer extends StatefulWidget {
         required this.shader,
         this.timeUniform = 'uTime',
         this.debug = false,
+        this.active = true,
         this.onShaderLoaded,
         this.child})
       : super(key: key);
@@ -53,6 +57,10 @@ class _ShaderContainerState extends State<ShaderContainer>
   @override
   void didUpdateWidget(ShaderContainer oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.active != widget.active) {
+      _updateTickerState();
+    }
+
     if (!widget.debug) {
       return;
     }
@@ -255,6 +263,7 @@ class _ShaderContainerState extends State<ShaderContainer>
       _shader?.setFloat(timeUniform.index, elapsedSeconds);
       _time?.value = elapsedSeconds;
     });
+    _updateTickerState();
     _ticker!.start();
   }
 
@@ -351,6 +360,10 @@ class _ShaderContainerState extends State<ShaderContainer>
       completer.complete(img);
     });
     return completer.future;
+  }
+
+  void _updateTickerState() {
+    _ticker?.muted = !widget.active;
   }
 }
 
