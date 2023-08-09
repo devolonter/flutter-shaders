@@ -255,7 +255,7 @@ class _ShaderContainerState extends State<ShaderContainer>
     _lookupBuffer(buffer, 0, (start, line) {
       final List<String> split = line.split(RegExp(r"\s+"));
 
-      if (split.length == 3 && split[0] == 'uniform') {
+      if (split.length >= 3 && split[0] == 'uniform') {
         if (_uniforms.containsKey(split[2])) {
           return false;
         }
