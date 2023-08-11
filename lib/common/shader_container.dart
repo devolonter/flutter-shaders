@@ -38,9 +38,9 @@ class _ShaderContainerState extends State<ShaderContainer>
     with SingleTickerProviderStateMixin {
   Future<FragmentShader>? _loader;
   final Map<String, _Uniform> _uniforms = {};
+  final ValueNotifier<int> _tick = ValueNotifier(0);
 
   FragmentShader? _shader;
-  ValueNotifier<double>? _time;
   Ticker? _ticker;
 
   String? _shaderPath;
@@ -83,7 +83,7 @@ class _ShaderContainerState extends State<ShaderContainer>
           return CustomPaint(
               painter: _ShaderPainter(
                   shader: snapshot.data!,
-                  repaint: _time,
+                  repaint: _tick,
                   onPaint: _getPaintCallback()),
               child: widget.child);
         } else {
@@ -171,6 +171,7 @@ class _ShaderContainerState extends State<ShaderContainer>
     }
 
     List<double> val = List.filled(uniform.size, 0, growable: false);
+    _tick.value++;
 
     if ((value.runtimeType == List<double>) && value.length == uniform.size) {
       for (int i = 0; i < val.length; i++) {
@@ -263,11 +264,10 @@ class _ShaderContainerState extends State<ShaderContainer>
   }
 
   void _createTicker(_Uniform timeUniform) {
-    _time = ValueNotifier(0.0);
     _ticker = createTicker((elapsed) {
       final double elapsedSeconds = elapsed.inMilliseconds / 1000;
       _shader?.setFloat(timeUniform.index, elapsedSeconds);
-      _time?.value = elapsedSeconds;
+      _tick.value++;
     });
     _updateTickerState();
     _ticker!.start();
@@ -284,7 +284,7 @@ class _ShaderContainerState extends State<ShaderContainer>
     int? timeUniform;
 
     _lookupBuffer(buffer, 0, (start, line) {
-      final List<String> split = line.split(RegExp(r"\s+"));
+      final List<String> split = line.split(RegExp(r'\s+'));
 
       if (split.length >= 3 && split[0] == 'uniform') {
         if (_uniforms.containsKey(split[2])) {
@@ -315,7 +315,7 @@ class _ShaderContainerState extends State<ShaderContainer>
 
         if (size != null) {
           _lookupBuffer(buffer, start, (_, line) {
-            final List<String> s = line.split(RegExp(r"(\s+|[-*+/(),])"));
+            final List<String> s = line.split(RegExp(r'(\s+|[-*+/(),])'));
 
             for (var i = 0; i < s.length; i++) {
               if (s[i] == split[2]) {
